@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Department Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div class="container mx-auto p-8 max-w-6xl">
+        <header class="mb-12 border-b border-gray-200 pb-6">
+            <h1 class="text-4xl font-bold text-gray-800">IT Operations Portal</h1>
+            <p class="text-gray-500 mt-2">NIC Network Infrastructure & Systems</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <a href="ups_dashboard.html" target="_blank" class="group block bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-blue-400">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Live</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">UPS Operations</h2>
+                    <p class="text-gray-500 text-sm">Real-time telemetry for 50+ APC units. Monitor battery runtime, voltage, and load.</p>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm font-medium text-blue-600">
+                    Open Dashboard 
+                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </div>
+            </a>
+
+            <div class="block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 opacity-60">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-gray-100 text-gray-400 rounded-lg">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-400 mb-2">Network Stats</h2>
+                    <p class="text-gray-400 text-sm">Future integration for switch and router telemetry.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

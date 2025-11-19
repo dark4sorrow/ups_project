@@ -1,0 +1,13 @@
+[Unit]
+Description=APC UPS Monitoring Backend
+After=network.target
+
+[Service]
+User=damurphy
+WorkingDirectory=/home/damurphy/
+# This points to the PYTHON INSIDE THE VIRTUAL ENV
+ExecStart=/home/damurphy/ups_env/bin/python /home/damurphy/ups_server.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

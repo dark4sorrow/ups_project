@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPS Network Operations Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom Status Colors */
+        .status-online { background-color: #22c55e; color: white; }
+        .status-on-battery { background-color: #f97316; color: white; }
+        .status-offline { background-color: #ef4444; color: white; }
+        .status-needs-attention { background-color: #eab308; color: black; }
+        
+        /* Dashboard Card Hover Effect */
+        .ups-card { transition: all 0.2s ease-in-out; }
+        .ups-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Online')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Online</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-online">0</p>
+                </div>
+                <div class="p-2 bg-green-100 rounded-full text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('On Battery')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">On Battery</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-battery">0</p>
+                </div>
+                <div class="p-2 bg-orange-100 rounded-full text-orange-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Needs Attention')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Attention / Off</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-attention">0</p>
+                </div>
+                <div class="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Offline')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Network Offline</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-offline">0</p>
+                </div>
+                <div class="p-2 bg-red-100 rounded-full text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h1 class="text-2xl font-bold text-gray-800">UPS Operations Dashboard</h1>
+            <div class="relative w-full sm:w-96">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                </div>
+                <input type="text" id="search-box" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Search by Name, IP, or Status...">
+                <button id="clear-filter" class="hidden absolute right-2 top-2 text-xs text-gray-500 hover:text-blue-600" onclick="resetFilters()">Clear Filters</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="ups-grid">
+            <div class="col-span-full text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
+                <p class="mt-2 text-gray-500">Loading Telemetry...</p>
+            </div>
+        </div>
+        
+        <p class="text-center text-xs text-gray-400 mt-8" id="last-updated">Last Updated: -</p>
+    </div>
+
+    <script>
+        const upsGrid = document.getElementById('ups-grid');
+        const searchBox = document.getElementById('search-box');
+        const API_URL = '/api/ups-status';
+        let currentData = [];
+        let activeFilter = null;
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API Error");
+                currentData = await response.json();
+                
+                updateHeaderCounts(currentData);
+                renderUPSData();
+                
+                const now = new Date();
+                document.getElementById('last-updated').textContent = `Last Updated: ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function updateHeaderCounts(data) {
+            const counts = {
+                Online: 0,
+                OnBattery: 0,
+                Attention: 0,
+                Offline: 0
+            };
+
+            data.forEach(ups => {
+                if (ups.status === 'Online') counts.Online++;
+                else if (ups.status === 'On Battery') counts.OnBattery++;
+                else if (ups.status === 'Offline') counts.Offline++;
+                else counts.Attention++; // Catches 'Output Off', 'Smart Boost', etc.
+            });
+
+            document.getElementById('count-online').textContent = counts.Online;
+            document.getElementById('count-battery').textContent = counts.OnBattery;
+            document.getElementById('count-attention').textContent = counts.Attention;
+            document.getElementById('count-offline').textContent = counts.Offline;
+        }
+
+        function renderUPSData() {
+            const searchTerm = searchBox.value.toLowerCase();
+            
+            // Sort: Offline/Attention first, then by Name
+            let filtered = currentData.sort((a, b) => {
+                const priority = { 'On Battery': 0, 'Output Off': 1, 'Offline': 2, 'Online': 5 };
+                const scoreA = priority[a.status] !== undefined ? priority[a.status] : 3; // 3 = Misc Attention
+                const scoreB = priority[b.status] !== undefined ? priority[b.status] : 3;
+                return scoreA - scoreB;
+            });
+
+            // Filter by Header Click
+            if (activeFilter) {
+                if (activeFilter === 'Needs Attention') {
+                    filtered = filtered.filter(u => u.status !== 'Online' && u.status !== 'On Battery' && u.status !== 'Offline');
+                } else {
+                    filtered = filtered.filter(u => u.status === activeFilter);
+                }
+            }
+
+            // Filter by Search Box
+            if (searchTerm) {
+                filtered = filtered.filter(u => 
+                    u.name.toLowerCase().includes(searchTerm) || 
+                    u.ipAddress.includes(searchTerm) ||
+                    u.status.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            upsGrid.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                upsGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No devices match your search.</div>';
+                return;
+            }
+
+            filtered.forEach(ups => {
+                const load = parseInt(ups.load) || 0;
+                const bat = parseInt(ups.batteryCapacity) || 0;
+                
+                // Use the protocol sent from backend, or default to http if missing
+                const protocol = ups.protocol || 'http';
+                
+                const card = `
+                    <div class="ups-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                        <div class="p-4 flex-grow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h2 class="text-lg font-bold text-gray-800 truncate w-40" title="${ups.name}">${ups.name}</h2>
+                                    <a href="${protocol}://${ups.ipAddress}" target="_blank" class="text-xs font-mono text-blue-500 hover:underline hover:text-blue-700 flex items-center gap-1">
+                                        ${ups.ipAddress}
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    </a>
+                                </div>
+                                <span class="px-2 py-1 text-xs font-bold rounded-full ${ups.statusClass}">${ups.status}</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-3 text-sm">
+                                <div>
+                                    <span class="text-gray-500 text-xs">Runtime</span>
+                                    <p class="font-semibold text-gray-900">${ups.runtime}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 text-xs">Batt Date</span>
+                                    <p class="font-semibold text-gray-900">${ups.batteryDate}</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-500">Battery</span>
+                                        <span class="font-bold">${ups.batteryCapacity}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: ${bat}%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-500">Load</span>
+                                        <span class="font-bold">${ups.load}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2">
+                                        <div class="bg-indigo-500 h-2 rounded-full" style="width: ${load}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                                <span>In: <b class="text-gray-700">${ups.inputVoltage}V</b></span>
+                                <span>Out: <b class="text-gray-700">${ups.outputVoltage}V</b></span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-2 text-xs text-gray-400 text-center border-t border-gray-100">
+                            Model: ${ups.model}
+                        </div>
+                    </div>
+                `;
+                upsGrid.innerHTML += card;
+            });
+        }
+
+        function filterByStatus(status) {
+            activeFilter = (activeFilter === status) ? null : status; // Toggle
+            document.getElementById('clear-filter').classList.remove('hidden');
+            if (!activeFilter) document.getElementById('clear-filter').classList.add('hidden');
+            renderUPSData();
+        }
+        
+        function resetFilters() {
+            activeFilter = null;
+            searchBox.value = '';
+            document.getElementById('clear-filter').classList.add('hidden');
+            renderUPSData();
+        }
+
+        searchBox.addEventListener('input', renderUPSData);
+
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>

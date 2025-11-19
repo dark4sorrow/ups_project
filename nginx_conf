@@ -1,0 +1,22 @@
+server {
+    listen 80;
+    server_name _;
+
+    # Root directory for all files
+    root /var/www/html;
+
+    # 1. Default Landing Page
+    # If user hits root (/), serve index.html
+    location / {
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
+
+    # 2. Reverse Proxy for the API
+    # This is required for the UPS dashboard to get data
+    location /api/ {
+        proxy_pass http://127.0.0.1:5001/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
