@@ -1,0 +1,7 @@
+{
+    "SECRET_KEY": "your-super-secret-key-here",
+    "DEBUG": false,
+    "ALLOWED_HOSTS": ["galacticbacon.nic.edu"],
+    "INVENTORY_FILE": "ups_inventory.json",
+    "USERS_FILE": "users.json"
+}
