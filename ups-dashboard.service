@@ -1,12 +1,12 @@
 [Unit]
-Description=APC UPS Monitoring Backend
+Description=Gunicorn instance to serve the UPS Dashboard
 After=network.target
 
 [Service]
 User=damurphy
-WorkingDirectory=/home/damurphy/
-# This points to the PYTHON INSIDE THE VIRTUAL ENV
-ExecStart=/home/damurphy/ups_env/bin/python /home/damurphy/ups_server.py
+Group=www-data
+WorkingDirectory=/config/workspace/ups_project
+ExecStart=/home/damurphy/ups_env/bin/gunicorn --workers 3 --bind unix:ups_dashboard.sock -m 007 wsgi:app
 Restart=always
 
 [Install]

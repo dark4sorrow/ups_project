@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Security Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .stars { background-image: radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)), radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)), radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)); background-size: 200px 200px; animation: shine 4s infinite linear; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center stars">
+    <div class="w-full max-w-md bg-slate-800 p-8 rounded-xl shadow-2xl border border-slate-700">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 mb-4">
+                <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Security Checkpoint</h1>
+            <p class="text-slate-400 text-sm mt-2">NIC Operations Portal</p>
+        </div>
+
+        <form method="POST" action="/login" class="space-y-6">
+            <div>
+                <label class="block text-xs uppercase text-slate-400 font-bold mb-2">Identity</label>
+                <input type="text" name="username" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="Username" required autofocus>
+            </div>
+            <div>
+                <label class="block text-xs uppercase text-slate-400 font-bold mb-2">Passcode</label>
+                <input type="password" name="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="••••••••" required>
+            </div>
+            
+            {% if error %}
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs text-center">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all transform active:scale-95">
+                Authenticate
+            </button>
+        </form>
+        <p class="text-center text-slate-600 text-xs mt-8">Restricted Access System • galacticbacon</p>
+    </div>
+</body>
+</html>

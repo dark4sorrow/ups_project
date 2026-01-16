@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPS Network Operations Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .status-online { background-color: #22c55e; color: white; }
+        .status-on-battery { background-color: #f97316; color: white; }
+        .status-offline { background-color: #ef4444; color: white; }
+        .status-needs-attention { background-color: #eab308; color: black; }
+        
+        .ups-card { transition: all 0.2s ease-in-out; }
+        .ups-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Show edit controls only on hover */
+        .ups-card .edit-controls { opacity: 0; transition: opacity 0.2s; }
+        .ups-card:hover .edit-controls { opacity: 1; }
+
+        .modal { transition: opacity 0.3s ease; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Online')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Online</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-online">0</p>
+                </div>
+                <div class="p-2 bg-green-100 rounded-full text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('On Battery')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">On Battery</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-battery">0</p>
+                </div>
+                <div class="p-2 bg-orange-100 rounded-full text-orange-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Needs Attention')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Attention / Off</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-attention">0</p>
+                </div>
+                <div class="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500 flex items-center justify-between cursor-pointer hover:bg-gray-50" onclick="filterByStatus('Offline')">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Network Offline</p>
+                    <p class="text-2xl font-bold text-gray-800" id="count-offline">0</p>
+                </div>
+                <div class="p-2 bg-red-100 rounded-full text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">Firmware Versions</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="firmwareChart"></canvas>
+                </div>
+                <div class="mt-4 flex justify-center items-center gap-3 text-xs">
+                    <button onclick="openReport('FIRMWARE', 'ALL')" class="flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                        View Full Fleet Report
+                    </button>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">Fleet Load Capacity</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="loadChart"></canvas>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-center">Click on a pie slice to view devices in that load category.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-gray-800">UPS Operations</h1>
+                <button onclick="openSerialModal()" class="bg-gray-800 hover:bg-gray-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Serial # List
+                </button>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button onclick="openAddModal()" class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add Device
+                </button>
+
+                <div class="relative w-full sm:w-80">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <input type="text" id="search-box" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Search by Name, IP, or Status...">
+                    <button id="clear-filter" class="hidden absolute right-2 top-2 text-xs text-gray-500 hover:text-blue-600" onclick="resetFilters()">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="ups-grid">
+            <div class="col-span-full text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
+                <p class="mt-2 text-gray-500">Loading Inventory...</p>
+            </div>
+        </div>
+        
+        <p class="text-center text-xs text-gray-400 mt-8" id="last-updated">Last Updated: -</p>
+    </div>
+
+    <div id="serial-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeSerialModal()"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h3 class="text-xl leading-6 font-bold text-gray-900">UPS Serial Number Inventory</h3>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <div class="relative flex-grow sm:w-64">
+                                <input type="text" id="serial-search" oninput="renderSerialTable()" placeholder="Search serials..." class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                            </div>
+                            <button onclick="copySerialList()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[60vh] border rounded-lg border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200" id="serial-table">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPS Hostname</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPS IP Address</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPS Serial #</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="serial-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm" onclick="closeSerialModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="log-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">UPS Logs</h3>
+                    <div class="relative h-96 w-full"><canvas id="upsLogChart"></canvas></div>
+                    <div id="modal-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 hidden">
+                        <div class="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="closeModal()">Close</button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="fetchLogs(currentModalIp, currentModalName)">Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeReportModal()"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl leading-6 font-bold text-gray-900" id="report-modal-title">Report</h3>
+                        <button onclick="copyReportTable()" class="bg-blue-50 text-blue-700 px-3 py-1 rounded text-sm font-medium border border-blue-200">Copy List</button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[60vh] border rounded-lg border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200" id="report-table">
+                            <thead class="bg-gray-50 sticky top-0"><tr id="report-table-headers"></tr></thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="report-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm" onclick="closeReportModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="document.getElementById('add-modal').classList.add('hidden')"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Device</h3>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Device Name</label>
+                        <input type="text" id="new-device-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">IP Address</label>
+                        <input type="text" id="new-device-ip" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm" onclick="submitAddDevice()">Add Device</button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('add-modal').classList.add('hidden')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="document.getElementById('edit-modal').classList.add('hidden')"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Edit Device</h3>
+                    <input type="hidden" id="edit-original-ip">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Device Name</label>
+                        <input type="text" id="edit-device-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">IP Address</label>
+                        <input type="text" id="edit-device-ip" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="pt-4 border-t border-gray-100">
+                        <button onclick="confirmDeleteDevice()" class="text-red-600 text-sm hover:text-red-800 hover:underline flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Permanently Delete Device
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm" onclick="submitEditDevice()">Save Changes</button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('edit-modal').classList.add('hidden')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const upsGrid = document.getElementById('ups-grid');
+        const searchBox = document.getElementById('search-box');
+        const API_URL = '/api/ups-status';
+        let currentData = [];
+        let activeFilter = null;
+        let chartInstance = null;
+        let firmwareChartInstance = null;
+        let loadChartInstance = null;
+        let currentModalIp = '';
+        let currentModalName = '';
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API Error");
+                currentData = await response.json();
+                
+                updateHeaderCounts(currentData);
+                renderAnalytics(currentData);
+                renderLoadChart(currentData);
+                renderUPSData();
+                
+                const now = new Date();
+                document.getElementById('last-updated').textContent = `Last Updated: ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // --- SERIAL NUMBER LIST LOGIC ---
+
+        function openSerialModal() {
+            document.getElementById('serial-search').value = '';
+            renderSerialTable();
+            document.getElementById('serial-modal').classList.remove('hidden');
+        }
+
+        function renderSerialTable() {
+            const tbody = document.getElementById('serial-table-body');
+            const searchVal = document.getElementById('serial-search').value.toLowerCase();
+            tbody.innerHTML = '';
+            
+            let filtered = [...currentData].sort((a,b) => a.name.localeCompare(b.name));
+
+            if (searchVal) {
+                filtered = filtered.filter(u => 
+                    u.name.toLowerCase().includes(searchVal) || 
+                    u.ipAddress.includes(searchVal) || 
+                    (u.serialNumber && u.serialNumber.toLowerCase().includes(searchVal))
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500 italic">No matching serials found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(ups => {
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ups.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${ups.ipAddress}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold select-all">${ups.serialNumber || 'N/A'}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function closeSerialModal() {
+            document.getElementById('serial-modal').classList.add('hidden');
+        }
+
+        function copySerialList() {
+            const table = document.getElementById('serial-table');
+            let text = "UPS Hostname\tUPS IP Address\tUPS Serial #\n";
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length < 3) return; 
+                let rowText = [];
+                cols.forEach(c => rowText.push(c.innerText.trim()));
+                text += rowText.join('\t') + "\n";
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('button[onclick="copySerialList()"]');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Copied!
+                `;
+                btn.classList.replace('bg-blue-600', 'bg-green-600');
+                setTimeout(() => { 
+                    btn.innerHTML = originalHTML;
+                    btn.classList.replace('bg-green-600', 'bg-blue-600');
+                }, 2000);
+            });
+        }
+
+        // --- INVENTORY MANAGEMENT JS ---
+
+        function openAddModal() {
+            document.getElementById('new-device-name').value = '';
+            document.getElementById('new-device-ip').value = '';
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        async function submitAddDevice() {
+            const name = document.getElementById('new-device-name').value;
+            const ip = document.getElementById('new-device-ip').value;
+            if(!name || !ip) return alert("Please fill in all fields");
+
+            try {
+                const res = await fetch('/api/ups/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, ip })
+                });
+                if(res.ok) {
+                    document.getElementById('add-modal').classList.add('hidden');
+                    fetchData(); // Refresh grid immediately
+                } else {
+                    alert("Error adding device. Check IP uniqueness.");
+                }
+            } catch(e) { alert("Network Error"); }
+        }
+
+        function openEditModal(name, ip) {
+            document.getElementById('edit-original-ip').value = ip;
+            document.getElementById('edit-device-name').value = name;
+            document.getElementById('edit-device-ip').value = ip;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        async function submitEditDevice() {
+            const old_ip = document.getElementById('edit-original-ip').value;
+            const new_name = document.getElementById('edit-device-name').value;
+            const new_ip = document.getElementById('edit-device-ip').value;
+
+            try {
+                const res = await fetch('/api/ups/edit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ old_ip, new_ip, new_name })
+                });
+                if(res.ok) {
+                    document.getElementById('edit-modal').classList.add('hidden');
+                    fetchData();
+                } else {
+                    alert("Error editing device.");
+                }
+            } catch(e) { alert("Network Error"); }
+        }
+
+        async function confirmDeleteDevice() {
+            if(!confirm("Are you sure you want to delete this device? This cannot be undone.")) return;
+            const ip = document.getElementById('edit-original-ip').value;
+            try {
+                const res = await fetch('/api/ups/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ip })
+                });
+                if(res.ok) {
+                    document.getElementById('edit-modal').classList.add('hidden');
+                    fetchData();
+                } else {
+                    alert("Error deleting device.");
+                }
+            } catch(e) { alert("Network Error"); }
+        }
+
+
+        // --- EXISTING LOGIC BELOW ---
+
+        function updateHeaderCounts(data) {
+            const counts = { Online: 0, OnBattery: 0, Attention: 0, Offline: 0 };
+            data.forEach(ups => {
+                if (ups.status === 'Online') counts.Online++;
+                else if (ups.status === 'On Battery') counts.OnBattery++;
+                else if (ups.status === 'Offline') counts.Offline++;
+                else counts.Attention++;
+            });
+            document.getElementById('count-online').textContent = counts.Online;
+            document.getElementById('count-battery').textContent = counts.OnBattery;
+            document.getElementById('count-attention').textContent = counts.Attention;
+            document.getElementById('count-offline').textContent = counts.Offline;
+        }
+
+        function renderAnalytics(data) {
+            const ctx = document.getElementById('firmwareChart').getContext('2d');
+            const fwCounts = {};
+            data.forEach(ups => {
+                const fw = ups.firmware && ups.firmware !== 'N/A' ? ups.firmware : 'Unknown';
+                fwCounts[fw] = (fwCounts[fw] || 0) + 1;
+            });
+            const labels = Object.keys(fwCounts).sort();
+            const values = labels.map(l => fwCounts[l]);
+
+            if (firmwareChartInstance) firmwareChartInstance.destroy();
+            firmwareChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Device Count',
+                        data: values,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            openReport('FIRMWARE', labels[elements[0].index]);
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderLoadChart(data) {
+            const ctx = document.getElementById('loadChart').getContext('2d');
+            const buckets = { 'Low (<30%)': 0, 'Optimal (30-70%)': 0, 'High (>70%)': 0 };
+
+            data.forEach(ups => {
+                const load = parseInt(ups.load) || 0;
+                if (load < 30) buckets['Low (<30%)']++;
+                else if (load <= 70) buckets['Optimal (30-70%)']++;
+                else buckets['High (>70%)']++;
+            });
+
+            if (loadChartInstance) loadChartInstance.destroy();
+            loadChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(buckets),
+                    datasets: [{
+                        data: Object.values(buckets),
+                        backgroundColor: ['#3b82f6', '#22c55e', '#f97316'] 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = Object.keys(buckets)[index];
+                            openReport('LOAD', label);
+                        }
+                    }
+                }
+            });
+        }
+
+        function openReport(type, filter) {
+            const tbody = document.getElementById('report-table-body');
+            const thead = document.getElementById('report-table-headers');
+            const titleElem = document.getElementById('report-modal-title');
+            
+            tbody.innerHTML = '';
+            thead.innerHTML = '';
+            
+            let headerHTML = `
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPS Name</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+            `;
+
+            const sortedData = [...currentData].sort((a, b) => a.name.localeCompare(b.name));
+
+            if (type === 'FIRMWARE') {
+                headerHTML += `<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Firmware Version</th>`;
+                thead.innerHTML = headerHTML;
+                if (filter === 'ALL') titleElem.textContent = "Full Fleet Firmware Report";
+                else titleElem.textContent = `Firmware Report: Version ${filter}`;
+
+                sortedData.forEach(ups => {
+                    const fw = ups.firmware && ups.firmware !== 'N/A' ? ups.firmware : 'Unknown';
+                    if (filter === 'ALL' || fw === filter) {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ups.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono select-all">${ups.ipAddress}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${fw}</td>
+                            </tr>`;
+                    }
+                });
+            } else if (type === 'LOAD') {
+                headerHTML += `<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Load Percentage</th>`;
+                thead.innerHTML = headerHTML;
+                titleElem.textContent = `Load Report: ${filter}`;
+                sortedData.forEach(ups => {
+                    const load = parseInt(ups.load) || 0;
+                    let match = false;
+                    if (filter.includes('Low') && load < 30) match = true;
+                    else if (filter.includes('Optimal') && load >= 30 && load <= 70) match = true;
+                    else if (filter.includes('High') && load > 70) match = true;
+                    if (match) {
+                        let loadClass = "text-green-600";
+                        if (load > 70) loadClass = "text-orange-600 font-bold";
+                        if (load > 90) loadClass = "text-red-600 font-bold";
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ups.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono select-all">${ups.ipAddress}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm ${loadClass}">${load}%</td>
+                            </tr>`;
+                    }
+                });
+            }
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+        
+        function copyReportTable() {
+            const table = document.getElementById('report-table');
+            let text = "";
+            const headers = table.querySelectorAll('thead th');
+            let headerText = [];
+            headers.forEach(h => headerText.push(h.innerText));
+            text += headerText.join('\t') + "\n";
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                let rowText = [];
+                cols.forEach(c => rowText.push(c.innerText.trim()));
+                text += rowText.join('\t') + "\n";
+            });
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('button[onclick="copyReportTable()"]');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = `<span class="text-green-600 font-bold">Copied!</span>`;
+                setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
+            });
+        }
+
+        function renderUPSData() {
+            const searchTerm = searchBox.value.toLowerCase();
+            let filtered = currentData.sort((a, b) => a.name.localeCompare(b.name));
+
+            if (activeFilter) {
+                if (activeFilter === 'Needs Attention') {
+                    filtered = filtered.filter(u => u.status !== 'Online' && u.status !== 'On Battery' && u.status !== 'Offline');
+                } else {
+                    filtered = filtered.filter(u => u.status === activeFilter);
+                }
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(u => 
+                    u.name.toLowerCase().includes(searchTerm) || 
+                    u.ipAddress.includes(searchTerm) ||
+                    u.status.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            upsGrid.innerHTML = '';
+            if (filtered.length === 0) {
+                upsGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No devices match your search.</div>';
+                return;
+            }
+
+            filtered.forEach(ups => {
+                const load = parseInt(ups.load) || 0;
+                const bat = parseInt(ups.batteryCapacity) || 0;
+                const protocol = ups.protocol || 'http';
+                const card = `
+                    <div class="ups-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative group">
+                        
+                        <div class="absolute top-2 right-2 z-10 edit-controls bg-white/90 backdrop-blur rounded shadow-sm p-1 border border-gray-100 flex gap-1">
+                            <button onclick="openEditModal('${ups.name}', '${ups.ipAddress}')" title="Edit Device" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="p-4 flex-grow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h2 class="text-lg font-bold text-gray-800 truncate w-36" title="${ups.name}">${ups.name}</h2>
+                                    <a href="${protocol}://${ups.ipAddress}" target="_blank" class="text-xs font-mono text-blue-500 hover:underline hover:text-blue-700 flex items-center gap-1">
+                                        ${ups.ipAddress}
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    </a>
+                                </div>
+                                <span class="px-2 py-1 text-xs font-bold rounded-full ${ups.statusClass}">${ups.status}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3 text-sm">
+                                <div><span class="text-gray-500 text-xs">Runtime</span><p class="font-semibold text-gray-900">${ups.runtime}</p></div>
+                                <div><span class="text-gray-500 text-xs">Batt Date</span><p class="font-semibold text-gray-900">${ups.batteryDate}</p></div>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">Battery</span><span class="font-bold">${ups.batteryCapacity}%</span></div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: ${bat}%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">Load</span><span class="font-bold">${ups.load}%</span></div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-indigo-500 h-2 rounded-full" style="width: ${load}%"></div></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                                <span>In: <b class="text-gray-700">${ups.inputVoltage}V</b></span>
+                                <span>Out: <b class="text-gray-700">${ups.outputVoltage}V</b></span>
+                            </div>
+                        </div>
+                        <div class="flex border-t border-gray-100 divide-x divide-gray-100">
+                             <div class="flex-1 bg-gray-50 px-4 py-2 text-xs text-gray-400 text-center flex flex-col justify-center">
+                                <span>Model: ${ups.model}</span>
+                                <span class="text-[10px] text-gray-300">FW: ${ups.firmware || '?'}</span>
+                            </div>
+                            <button onclick="openLogModal('${ups.ipAddress}', '${ups.name}')" class="flex-1 bg-gray-50 hover:bg-blue-50 text-blue-600 px-4 py-2 text-xs font-semibold text-center transition-colors flex items-center justify-center">
+                                View Logs
+                            </button>
+                        </div>
+                    </div>`;
+                upsGrid.innerHTML += card;
+            });
+        }
+
+        function filterByStatus(status) {
+            activeFilter = (activeFilter === status) ? null : status;
+            document.getElementById('clear-filter').classList.remove('hidden');
+            if (!activeFilter) document.getElementById('clear-filter').classList.add('hidden');
+            renderUPSData();
+        }
+        
+        function resetFilters() {
+            activeFilter = null;
+            searchBox.value = '';
+            document.getElementById('clear-filter').classList.add('hidden');
+            renderUPSData();
+        }
+
+        function openLogModal(ip, name) {
+            currentModalIp = ip;
+            currentModalName = name;
+            document.getElementById('modal-title').textContent = `UPS Logs: ${name} (${ip})`;
+            document.getElementById('log-modal').classList.remove('hidden');
+            fetchLogs(ip);
+        }
+
+        function closeModal() {
+            document.getElementById('log-modal').classList.add('hidden');
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        }
+
+        async function fetchLogs(ip) {
+            const loading = document.getElementById('modal-loading');
+            loading.classList.remove('hidden');
+            try {
+                let logData = [];
+                try {
+                    const response = await fetch(`/api/ups-logs?ip=${ip}`);
+                    if (response.ok) logData = await response.json();
+                    else throw new Error("Endpoint missing");
+                } catch (e) {
+                    console.log("Using Mock Data");
+                    const now = new Date();
+                    for(let i=0; i<10; i++) {
+                        const time = new Date(now.getTime() - i * 10 * 60000); 
+                        logData.push({
+                            time: time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                            vmin: (120 + Math.random() * 2).toFixed(2),
+                            vmax: (122 + Math.random() * 2).toFixed(2),
+                            vout: (121 + Math.random()).toFixed(2),
+                            load: (10 + Math.random() * 5).toFixed(2),
+                            capacity: 100
+                        });
+                    }
+                    logData.reverse(); 
+                }
+                renderChart(logData);
+            } catch (error) { console.error("Failed to load logs", error); } finally { loading.classList.add('hidden'); }
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('upsLogChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            const labels = data.map(d => d.time);
+            const inputV = data.map(d => d.vmin);
+            const outputV = data.map(d => d.vout);
+            const loadP = data.map(d => d.load);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Input Voltage (V)', data: inputV, borderColor: '#3b82f6', yAxisID: 'y', tension: 0.3 },
+                        { label: 'Output Voltage (V)', data: outputV, borderColor: '#22c55e', yAxisID: 'y', tension: 0.3, borderDash: [5, 5] },
+                        { label: 'Load (%)', data: loadP, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, yAxisID: 'y1', tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Voltage (V)' }, suggestedMin: 110, suggestedMax: 130 },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Load %' }, min: 0, max: 100, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+        searchBox.addEventListener('input', renderUPSData);
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>

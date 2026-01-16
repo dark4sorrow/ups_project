@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GalacticBacon NSE Tool</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #f0f2f5; color: #333; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-top: 0; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #555; }
+        input, select { padding: 12px; margin-top: 5px; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { margin-top: 20px; width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #0056b3; }
+        .status { margin-top: 15px; font-weight: bold; color: #666; }
+        pre { background: #1e1e1e; color: #00ff00; padding: 20px; overflow-x: auto; border-radius: 8px; min-height: 100px; font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🛡️ NSE Orchestrator</h1>
+        <p>Run Nmap scripts directly from <strong>galacticbacon</strong>.</p>
+        
+        <label>Target IP / Domain:</label>
+        <input type="text" id="target" placeholder="e.g., 192.168.1.100" />
+
+        <label>Select Script:</label>
+        <select id="script">
+            <option value="http-title">http-title (Website Title)</option>
+            <option value="ssl-enum-ciphers">ssl-enum-ciphers (Check SSL Strength)</option>
+            <option value="smb-os-discovery">smb-os-discovery (Windows/Samba Info)</option>
+            <option value="dns-brute">dns-brute (Subdomain Discovery)</option>
+            <option value="vuln">vuln (Standard Vulnerability Scan)</option>
+        </select>
+
+        <button onclick="runScan()">🚀 Run Scan</button>
+
+        <div id="status" class="status">Ready</div>
+        <h3>Results:</h3>
+        <pre id="output">// Results will appear here...</pre>
+    </div>
+
+    <script>
+        async function runScan() {
+            const target = document.getElementById('target').value;
+            const script = document.getElementById('script').value;
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+
+            if(!target) { alert("Please enter a target IP or Domain."); return; }
+
+            status.innerText = "⏳ Running scan... please wait...";
+            output.innerText = "Initializing Nmap...";
+            
+            try {
+                // DYNAMIC URL: Uses the current browser hostname (galacticbacon.nic.edu) 
+                // but forces port 8000 where the Python API lives.
+                const apiUrl = `${window.location.protocol}//${window.location.hostname}:8000/scan`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: target, script: script })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                status.innerText = "✅ Scan Complete!";
+                output.innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                status.innerText = "❌ Connection Error";
+                output.innerText = "Could not connect to Python backend on port 8000.\nEnsure 'nmap_tool.py' is running.\n\nError details: " + error;
+            }
+        }
+    </script>
+</body>
+</html>

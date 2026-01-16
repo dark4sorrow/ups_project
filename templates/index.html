@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIC :: OP-PORTAL :: CYBERDECK</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* Base Cyberpunk Styles */
+        body { 
+            font-family: 'Share Tech Mono', monospace; 
+            background-color: #0d1117; /* Very Dark Background */
+            color: #00e0ff; /* Neon Cyan Base Text */
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%231a202c" d="M0 0h100v100H0z"/><path fill="none" stroke="%23374151" stroke-width="0.5" d="M0 0h100v100H0zM0 0h10v10H0zM0 10h10v10H0zM0 20h10v10H0zM0 30h10v10H0zM0 40h10v10H0zM0 50h10v10H0zM0 60h10v10H0zM0 70h10v10H0zM0 80h10v10H0zM0 90h10v10H0zM10 0h10v10H10zM10 10h10v10H10zM10 20h10v10H10zM10 30h10v10H10zM10 40h10v10H10zM10 50h10v10H10zM10 60h10v10H10zM10 70h10v10H10zM10 80h10v10H10zM10 90h10v10H10zM20 0h10v10H20zM20 10h10v10H20zM20 20h10v10H20zM20 30h10v10H20zM20 40h10v10H20zM20 50h10v10H20zM20 60h10v10H20zM20 70h10v10H20zM20 80h10v10H20zM20 90h10v10H20zM30 0h10v10H30zM30 10h10v10H30zM30 20h10v10H30zM30 30h10v10H30zM30 40h10v10H30zM30 50h10v10H30zM30 60h10v10H30zM30 70h10v10H30zM30 80h10v10H30zM30 90h10v10H30zM40 0h10v10H40zM40 10h10v10H40zM40 20h10v10H40zM40 30h10v10H40zM40 40h10v10H40zM40 50h10v10H40zM40 60h10v10H40zM40 70h10v10H40zM40 80h10v10H40zM40 90h10v10H40zM50 0h10v10H50zM50 10h10v10H50zM50 20h10v10H50zM50 30h10v10H50zM50 40h10v10H50zM50 50h10v10H50zM50 60h10v10H50zM50 70h10v10H50z|M50 80h10v10H50zM50 90h10v10H50zM60 0h10v10H60zM60 10h10v10H60zM60 20h10v10H60zM60 30h10v10H60zM60 40h10v10H60zM60 50h10v10H60zM60 60h10v10H60zM60 70h10v10H60zM60 80h10v10H60zM60 90h10v10H60zM70 0h10v10H70zM70 10h10v10H70zM70 20h10v10H70zM70 30h10v10H70zM70 40h10v10H70zM70 50h10v10H70zM70 60h10v10H70zM70 70h10v10H70zM70 80h10v10H70zM70 90h10v10H70zM80 0h10v10H80zM80 10h10v10H80zM80 20h10v10H80zM80 30h10v10H80zM80 40h10v10H80zM80 50h10v10H80zM80 60h10v10H80zM80 70h10v10H80zM80 80h10v10H80zM80 90h10v10H80zM90 0h10v10H90zM90 10h10v10H90zM90 20h10v10H90zM90 30h10v10H90zM90 40h10v10H90zM90 50h10v10H90zM90 60h10v10H90zM90 70h10v10H90zM90 80h10v10H90zM90 90h10v10H90z"/></svg>');
+            background-size: 100px 100px;
+        }
+        
+        /* Neon Colors and Effects */
+        .neon-blue { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
+        .neon-magenta { color: #ff00ff; text-shadow: 0 0 5px #ff00ff; }
+        
+        /* Card Styles */
+        .cyber-card {
+            background-color: rgba(17, 24, 39, 0.7); /* Deep dark background with transparency */
+            border: 2px solid #374151; /* Dark gray border */
+            border-left: 5px solid #00ffff; /* Neon blue accent */
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .cyber-card:hover {
+            transform: translateY(-3px);
+            border-color: #ff00ff; /* Magenta hover accent */
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+            background-color: rgba(17, 24, 39, 0.9);
+        }
+        .header-glow {
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+    </style>
+
+</head>
+<body class="min-h-screen stars">
+
+    <div class="container mx-auto p-8 max-w-7xl">
+        <header class="mb-12 pt-8 border-b border-[#00ffff] pb-8 text-center">
+            <h1 class="text-5xl font-extrabold header-glow text-white tracking-widest">
+                NIC OPERATIONS PORTAL
+            </h1>
+            <p class="text-lg neon-blue mt-3 tracking-wider">
+                ::: CYBERDECK ACCESS POINT :: CORE NETWORK INFRASTRUCTURE :::
+            </p>
+        </header>
+
+        <h2 class="text-lg font-bold neon-magenta mb-5 tracking-widest uppercase border-b-2 border-magenta-500/50 pb-2">
+            [0x1] Monitoring & Core Services
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <a href="https://galacticbacon.nic.edu/informacast/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-xl font-bold neon-blue mb-1">Informacast Monitor</h3>
+                    <p class="text-gray-400 text-sm">Emergency broadcast status and notification system health telemetry.</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/ups_dashboard.html" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-xl font-bold neon-blue mb-1">UPS Operations</h3>
+                    <p class="text-gray-400 text-sm">Real-time status for APC array units: runtime, load, and cell integrity.</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/hostmonitor/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-xl font-bold neon-blue mb-1">Host Monitor</h3>
+                    <p class="text-gray-400 text-sm">Active audit and status tracking for critical network nodes.</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/ssl_dashboard.html" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-xl font-bold neon-blue mb-1">Web Security Audit</h3>
+                    <p class="text-gray-400 text-sm">Automated SSL expiration monitoring and header integrity.</p>
+                </div>
+            </a>
+        </div>
+
+        <h2 class="text-lg font-bold neon-magenta mb-5 mt-10 tracking-widest uppercase border-b-2 border-magenta-500/50 pb-2">
+            [0x2] Utilities & Debug
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <a href="https://galacticbacon.nic.edu/secure-web/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg" title="Isolated, disposable web session for secure external browsing.">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Secure Web Access</h3>
+                    <p class="text-gray-400 text-sm mt-1">Isolated container for zero-trust external browsing (KasmVNC Proxy).</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/dns/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Asset Resolver [DNS]</h3>
+                    <p class="text-gray-400 text-sm mt-1">Multi-check IP lookup and domain resolution utility.</p>
+                </div>
+            </a>
+            
+            <a href="https://galacticbacon.nic.edu/nmap_index.html" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">NSE Orchestrator</h3>
+                    <p class="text-gray-400 text-sm mt-1">Network scan and vulnerability detection interface.</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/os-fingerprinter/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">OS Fingerprinter</h3>
+                    <p class="text-gray-400 text-sm mt-1">Deep inspection of OS capabilities and remote signatures.</p>
+                </div>
+            </a>
+
+            {% if user.id == 'admin' %}
+            <a href="https://galacticbacon.nic.edu/vscode/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">VSCode Server</h3>
+                    <p class="text-gray-400 text-sm mt-1">Remote development environment access (Websocket proxy).</p>
+                </div>
+            </a>
+            {% endif %}
+
+            {% if user.id == 'admin' %}
+            <a href="https://galacticbacon.nic.edu/borgui/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Borg Backup UI</h3>
+                    <p class="text-gray-400 text-sm mt-1">Client interface for core data management.</p>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+
+        <h2 class="text-lg font-bold neon-magenta mb-5 mt-10 tracking-widest uppercase border-b-2 border-magenta-500/50 pb-2">
+            [0x3] Management Proxies
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {% if user.id == 'admin' %}
+            <a href="https://galacticbacon.nic.edu/webmin/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Webmin</h3>
+                    <p class="text-gray-400 text-sm mt-1">Linux system administration GUI (Proxied).</p>
+                </div>
+            </a>
+            {% endif %}
+
+            {% if user.id == 'admin' %}
+            <a href="https://galacticbacon.nic.edu/docker/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Docker Portainer</h3>
+                    <p class="text-gray-400 text-sm mt-1">Container and environment management UI (Proxied).</p>
+                </div>
+            </a>
+            {% endif %}
+
+            {% if user.id == 'admin' %}
+            <a href="https://galacticbacon.nic.edu/cockpit/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Cockpit</h3>
+                    <p class="text-gray-400 text-sm mt-1">Server health, log, and service management (Proxied).</p>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="https://galacticbacon.nic.edu/it-tools/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">IT-Tools</h3>
+                    <p class="text-gray-400 text-sm mt-1">Converters, formatters, and network utilities (Proxied).</p>
+                </div>
+            </a>
+
+            <a href="https://galacticbacon.nic.edu/speedtest/" target="_blank" class="cyber-card cyber-card-hover block rounded-lg">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold neon-blue">Network Speedtest</h3>
+                    <p class="text-gray-400 text-sm mt-1">Internal bandwidth testing utility (Proxied).</p>
+                </div>
+            </a>
+        </div>
+
+        <footer class="mt-16 pt-6 border-t border-slate-700 flex justify-between text-white">
+            <p class="text-xs text-gray-500 tracking-wider">RESTRICTED ACCESS SYSTEM • GALACTICBACON</p>
+            <div class="space-x-4">
+                <span class="text-sm text-gray-400">Welcome, Choomba: {{ user.id }}</span>
+                {% if user.id == 'admin' %}
+                <a href="https://galacticbacon.nic.edu/admin" target="_blank" class="text-sm neon-blue hover:text-white font-medium transition-colors">ADMIN</a>
+                {% endif %}
+                <a href="https://galacticbacon.nic.edu/about.html" target="_blank" class="text-sm neon-blue hover:text-white font-medium transition-colors">PROJECT DOCS</a>
+                <a href="https://galacticbacon.nic.edu/logout" target="_blank" class="text-sm text-red-500 hover:text-red-400 font-medium transition-colors">LOGOUT [EXIT]</a>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>

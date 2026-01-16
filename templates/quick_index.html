@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUICK IT DASHBOARD</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f4f4f9; }
+        h1 { color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 10px 0; }
+        a { text-decoration: none; color: #007bff; font-weight: bold; padding: 5px; border-radius: 3px; }
+        a:hover { background-color: #e2e6ea; }
+        .secure { color: #28a745; }
+        .external { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <h1>QUICK IT Operations Portal</h1>
+    <p>Using secure, proxied links on galacticbacon.nic.edu</p>
+
+    <h2>Primary Application Links</h2>
+    <ul>
+        <li><a class="secure" href="/">Main Dashboard (Login)</a></li>
+        <li><a class="secure" href="/ups_dashboard.html">UPS Operations Dashboard</a></li>
+        <li><a class="secure" href="/ssl_dashboard.html">Web Security Audit Dashboard</a></li>
+        <li><a class="secure" href="/nmap_index.html">NSE Orchestrator (Nmap)</a></li>
+        <li><a class="secure" href="/fingerprint/">OS Fingerprinter</a></li>
+        <li><a class="secure" href="/hostmonitor/">Host Monitor</a></li>
+        <li><a class="secure" href="/dns/">Asset Resolver (DNS)</a></li>
+    </ul>
+
+    <h2>Admin & Utility Proxies (via Nginx Port 443)</h2>
+    <ul>
+        <li><a class="secure" href="/vscode/" target="_blank">VSCode Server</a></li>
+        <li><a class="secure" href="/borgui/" target="_blank">Borg Backup UI</a></li>
+        <li><a class="secure" href="/webmin/" target="_blank">Webmin (Port 9090 Proxy)</a></li>
+        <li><a class="secure" href="/docker/" target="_blank">Docker Portainer (Port 9443 Proxy)</a></li>
+        <li><a class="secure" href="/cockpit/" target="_blank">Cockpit (Port 9091 Proxy)</a></li>
+        <li><a class="secure" href="/it-tools/" target="_blank">IT-Tools (Port 8081 Proxy)</a></li>
+        <li><a class="secure" href="/speedtest/" target="_blank">Speedtest (Port 8082 Proxy)</a></li>
+    </ul>
+
+    <h2>Original Non-Proxied Links (May fail security/firewall checks)</h2>
+    <ul>
+        <li><a class="external" href="https://galacticbacon.nic.edu:9090" target="_blank">Webmin (Original Port Link)</a></li>
+        <li><a class="external" href="https://galacticbacon.nic.edu:9443" target="_blank">Docker Portainer (Original Port Link)</a></li>
+        <li><a class="external" href="http://galacticbacon.nic.edu:5000/" target="_blank">Borg Backup UI (Original HTTP Link)</a></li>
+        <li><a class="external" href="https://galacticbacon.nic.edu:9091" target="_blank">Cockpit (Original Port Link)</a></li>
+        <li><a class="external" href="http://galacticbacon.nic.edu:8081" target="_blank">IT-Tools (Original HTTP Link)</a></li>
+        <li><a class="external" href="http://galacticbacon.nic.edu:8082" target="_blank">Speedtest (Original HTTP Link)</a></li>
+    </ul>
+
+    <hr style="margin-top: 30px;">
+    <h2>Session & Info</h2>
+    <ul>
+        <li><a href="/logout">Logout</a></li>
+        <li><a href="/about.html">About Project Documentation</a></li>
+    </ul>
+
+</body>
+</html>

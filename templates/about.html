@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Operations Manual - GalacticBacon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .code-block {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            border: 1px solid #333;
+            margin-bottom: 1.5rem;
+        }
+        .section-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2.5rem;
+        }
+        .cmd-label { color: #569cd6; font-weight: bold; }
+        .cmd-comment { color: #6a9955; font-style: italic; }
+        .cmd-val { color: #ce9178; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <div class="container mx-auto p-8 max-w-6xl">
+        <header class="mb-10 border-b-4 border-indigo-600 pb-6">
+            <h1 class="text-5xl font-black text-slate-900 mb-2">GalacticBacon Operations Manual</h1>
+            <p class="text-xl text-slate-600">The "Gold Master" guide to the unified IT infrastructure and recovery protocols.</p>
+        </header>
+
+        <nav class="bg-indigo-900 p-6 rounded-xl shadow-2xl mb-10 text-white">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span class="mr-2">🚀</span> Quick Access Modules
+            </h2>
+            <ul class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <li><a href="#master-commands" class="hover:text-indigo-300 transition-colors">⚡ 1. Power Commands</a></li>
+                <li><a href="#fleet-map" class="hover:text-indigo-300 transition-colors">🚢 2. Fleet Port Map</a></li>
+                <li><a href="#project-locations" class="hover:text-indigo-300 transition-colors">📂 3. File Locations</a></li>
+                <li><a href="#nginx-logic" class="hover:text-indigo-300 transition-colors">🌐 4. Nginx Architecture</a></li>
+                <li><a href="#borg-recovery" class="hover:text-indigo-300 transition-colors">📦 5. Borg & Recovery</a></li>
+                <li><a href="#cockpit-fix" class="hover:text-indigo-300 transition-colors">🛠️ 6. Cockpit Sub-path</a></li>
+                <li><a href="#vscode-access" class="hover:text-indigo-300 transition-colors">💻 7. VS Code Persistence</a></li>
+                <li><a href="/" class="text-emerald-400 font-bold hover:underline">🏠 Return Dashboard</a></li>
+            </ul>
+        </nav>
+
+        <section id="master-commands" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">1. Custom Power Commands (Aliases)</h2>
+            <p class="text-slate-700 mb-4">These commands are built into <code>~/.bashrc</code> for rapid administration.</p>
+            <div class="code-block">
+                <span class="cmd-label">toolbox</span>         <span class="cmd-comment"># Runs ds.sh: The health dashboard for all 10 services.</span><br>
+                <span class="cmd-label">refresh</span>         <span class="cmd-comment"># Stops, cleans orphans, and rebuilds the entire Docker stack.</span><br>
+                <span class="cmd-label">fleet</span>           <span class="cmd-comment"># Quick view of all running containers and their uptime.</span><br>
+                <span class="cmd-label">logs [name]</span>     <span class="cmd-comment"># Tail logs for a specific container (e.g., logs borg-ui-client).</span>
+            </div>
+            <h3 class="text-lg font-semibold mt-4 text-slate-700">Manual Repair Commands</h3>
+            <div class="code-block">
+                <span class="cmd-comment"># Force kill process on a port (if a container fails to start)</span><br>
+                <span class="cmd-label">sudo lsof -i :8086</span><br>
+                <span class="cmd-label">sudo kill -9 [PID]</span><br><br>
+                <span class="cmd-comment"># Reload Nginx without downtime</span><br>
+                <span class="cmd-label">sudo nginx -t && sudo systemctl reload nginx</span>
+            </div>
+        </section>
+
+        <section id="fleet-map" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">2. The Integrated Fleet (Verified Port Map)</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="p-3 border">Service</th>
+                        <th class="p-3 border">Internal Port</th>
+                        <th class="p-3 border">External Path</th>
+                        <th class="p-3 border">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    <tr><td class="p-3 border font-bold">IT-Tools</td><td class="p-3 border">8081</td><td class="p-3 border">/it-tools/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">Speedtest</td><td class="p-3 border">8082</td><td class="p-3 border">/speedtest/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">Nmap Web</td><td class="p-3 border">8084</td><td class="p-3 border">/nmap-web-nse/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">OS Fingerprinter</td><td class="p-3 border">8085</td><td class="p-3 border">/os-fingerprinter/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold text-indigo-700">Borg Web UI</td><td class="p-3 border">8086</td><td class="p-3 border">/borgui/</td><td class="p-3 border font-bold">NEW PORT</td></tr>
+                    <tr><td class="p-3 border font-bold">Host Monitor</td><td class="p-3 border">5005</td><td class="p-3 border">/hostmonitor/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">InformaCast</td><td class="p-3 border">5082</td><td class="p-3 border">/informacast/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">VS Code</td><td class="p-3 border">8778</td><td class="p-3 border">/vscode/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">Secure Firefox</td><td class="p-3 border">6901</td><td class="p-3 border">/secure-web/</td><td class="p-3 border text-green-600">Active</td></tr>
+                    <tr><td class="p-3 border font-bold">Borg Repo</td><td class="p-3 border">8022</td><td class="p-3 border">SSH Port</td><td class="p-3 border text-green-600">Active</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="project-locations" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">3. Critical File Locations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-indigo-600">Docker Infrastructure</h3>
+                    <ul class="text-sm space-y-2 mt-2">
+                        <li><code>~/docker_apps/docker-compose.yml</code> <span class="text-slate-400">(Main Config)</span></li>
+                        <li><code>~/docker_apps/host-monitor/</code> <span class="text-slate-400">(Custom Code)</span></li>
+                        <li><code>~/docker_apps/.env</code> <span class="text-slate-400">(Secret keys)</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-indigo-600">System Configs</h3>
+                    <ul class="text-sm space-y-2 mt-2">
+                        <li><code>/etc/nginx/sites-available/ups-dashboard</code> <span class="text-slate-400">(Proxy Logic)</span></li>
+                        <li><code>/etc/cockpit/cockpit.conf</code> <span class="text-slate-400">(Console Logic)</span></li>
+                        <li><code>~/.bashrc</code> <span class="text-slate-400">(System Aliases)</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="nginx-logic" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">4. Nginx Logic: Sub-path Assets Fix</h2>
+            <p class="text-slate-700 mb-4">All apps run behind <code>/subpath/</code>. To prevent 404s on CSS/JS files, Nginx uses <code>sub_filter</code> to inject the path into HTML on-the-fly.</p>
+            <div class="code-block">
+                <span class="cmd-comment"># Example: Borg UI Asset Fix</span><br>
+                location /borgui/ {<br>
+                &nbsp;&nbsp;proxy_pass http://127.0.0.1:8086/;<br>
+                &nbsp;&nbsp;proxy_set_header X-Forwarded-Prefix /borgui;<br>
+                &nbsp;&nbsp;sub_filter 'href="/assets/' 'href="/borgui/assets/';<br>
+                &nbsp;&nbsp;sub_filter 'src="/assets/' 'src="/borgui/assets/';<br>
+                &nbsp;&nbsp;sub_filter_once off;<br>
+                }
+            </div>
+        </section>
+
+        <section id="borg-recovery" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">5. Borg Backup & Recovery Protocol</h2>
+            <p class="text-slate-700 mb-4">The backup system uses an SSH-enabled repository server and a Web UI.</p>
+            <div class="code-block">
+                <span class="cmd-comment"># EMERGENCY RECOVERY STEPS</span><br>
+                <span class="cmd-comment"># 1. Install Docker & Nginx on fresh server.</span><br>
+                <span class="cmd-comment"># 2. Extract galactic_recovery.tar.gz to ~/docker_apps.</span><br>
+                <span class="cmd-comment"># 3. Copy nginx_configs to /etc/nginx/sites-available/.</span><br>
+                <span class="cmd-comment"># 4. Run 'docker compose up -d' in ~/docker_apps.</span><br><br>
+                <span class="cmd-comment"># RESET BORG ADMIN PASSWORD (If locked out)</span><br>
+                <span class="cmd-label">docker compose stop borg-ui</span><br>
+                <span class="cmd-label">docker compose rm -fv borg-ui</span> <span class="cmd-comment"># Deletes local DB</span><br>
+                <span class="cmd-label">docker compose up -d</span>
+            </div>
+        </section>
+
+        <section id="cockpit-fix" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">6. Cockpit Sub-path Logic</h2>
+            <p class="text-slate-700 mb-4">To run Cockpit inside the <code>/cockpit/</code> path, the system config must be aware of its root.</p>
+            <div class="code-block">
+                <span class="cmd-comment"># /etc/cockpit/cockpit.conf</span><br>
+                [WebService]<br>
+                Origins = https://galacticbacon.nic.edu<br>
+                ProtocolHeader = X-Forwarded-Proto<br>
+                UrlRoot = /cockpit
+            </div>
+        </section>
+
+        <section id="vscode-access" class="section-card">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b pb-2">7. VS Code Persistence & Home Access</h2>
+            <p class="text-slate-700 mb-4">VS Code is containerized but has a "window" into the host filesystem via Docker volume binds.</p>
+            <div class="code-block">
+                <span class="cmd-comment"># docker-compose.yml snippet</span><br>
+                code-server:<br>
+                &nbsp;&nbsp;volumes:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;- /home/damurphy:/home/damurphy <span class="cmd-comment"># Grants access to host home</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;- /home/damurphy/.config/code-server:/config <span class="cmd-comment"># Persists VS Code settings</span>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 text-sm pt-8 border-t border-slate-300">
+            &copy; 2026 NIC Network Infrastructure | Rebuild Audit Finalized Jan 15, 2026
+        </footer>
+    </div>
+</body>
+</html>

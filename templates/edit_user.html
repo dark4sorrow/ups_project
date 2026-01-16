@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIC :: OP-PORTAL :: EDIT USER</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* Base Cyberpunk Styles */
+        body { 
+            font-family: 'Share Tech Mono', monospace; 
+            background-color: #0d1117; /* Very Dark Background */
+            color: #00e0ff; /* Neon Cyan Base Text */
+        }
+        
+        /* Neon Colors and Effects */
+        .neon-blue { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
+        .neon-magenta { color: #ff00ff; text-shadow: 0 0 5px #ff00ff; }
+        
+        /* Card Styles */
+        .cyber-card {
+            background-color: rgba(17, 24, 39, 0.7);
+            border: 2px solid #374151;
+            border-left: 5px solid #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .header-glow {
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+        .cyber-input {
+            background-color: #1a202c;
+            border: 1px solid #374151;
+            color: #00e0ff;
+            padding: 8px;
+        }
+        .cyber-button {
+            background-color: #00ffff;
+            color: #0d1117;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen stars">
+
+    <div class="container mx-auto p-8 max-w-7xl">
+        <header class="mb-12 pt-8 border-b border-[#00ffff] pb-8 text-center">
+            <h1 class="text-5xl font-extrabold header-glow text-white tracking-widest">
+                EDIT USER
+            </h1>
+            <p class="text-lg neon-blue mt-3 tracking-wider">
+                ::: USER: {{ username }} :::
+            </p>
+        </header>
+
+        <div class="cyber-card p-6">
+            <form action="/admin/edit_user/{{ username }}" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="password" name="password" placeholder="New Password" class="cyber-input">
+                    <input type="email" name="email" value="{{ user_data.email }}" class="cyber-input">
+                </div>
+                <button type="submit" class="cyber-button mt-4">Update</button>
+            </form>
+        </div>
+        <footer class="mt-16 pt-6 border-t border-slate-700 flex justify-between text-white">
+            <a href="/admin" class="text-sm neon-blue hover:text-white font-medium transition-colors">BACK TO ADMIN</a>
+        </footer>
+    </div>
+
+</body>
+</html>

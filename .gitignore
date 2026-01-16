@@ -1,0 +1,15 @@
+# Security & Credentials
+*.key
+*.crt
+users.json
+config.json
+
+# Backups & Temp files
+*.bk
+*.bk2
+*.bk3
+__pycache__/
+.venv/
+
+# Service files (if you prefer to keep them local)
+ups-dashboard.service
