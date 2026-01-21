@@ -237,12 +237,20 @@ SSL_DOMAINS = [
     'websvc.nic.edu', 'websvc2.nic.edu', 'websvcfe.nic.edu', 'ww2.nic.edu'
 ]
 
-# Added 1.3.6.1.4.1.318.1.1.1.1.2.3.0 for UPS Serial Number
+# UPDATED OID LIST: Added 'Identification Name' (1.3.6.1.4.1.318.1.1.1.1.1.2.0) at the START
 OID_ORDER = [
-    '1.3.6.1.4.1.318.1.1.1.1.1.1.0', '1.3.6.1.4.1.318.1.1.1.4.1.1.0', '1.3.6.1.4.1.318.1.1.1.2.2.1.0',
-    '1.3.6.1.4.1.318.1.1.1.3.2.1.0', '1.3.6.1.4.1.318.1.1.1.4.2.1.0', '1.3.6.1.4.1.318.1.1.1.4.2.3.0',
-    '1.3.6.1.4.1.318.1.1.1.7.2.3.0', '1.3.6.1.4.1.318.1.1.1.2.2.3.0', '1.3.6.1.4.1.318.1.1.1.2.1.1.0',
-    '1.3.6.1.4.1.318.1.1.1.1.2.1.0', '1.3.6.1.4.1.318.1.1.1.1.2.3.0'
+    '1.3.6.1.4.1.318.1.1.1.1.1.2.0', # [0] UPS Ident Name (e.g. APC-SUB-MDF-ION)
+    '1.3.6.1.4.1.318.1.1.1.1.1.1.0', # [1] Model
+    '1.3.6.1.4.1.318.1.1.1.4.1.1.0', # [2] Status
+    '1.3.6.1.4.1.318.1.1.1.2.2.1.0', # [3] Battery Capacity
+    '1.3.6.1.4.1.318.1.1.1.3.2.1.0', # [4] Input Voltage
+    '1.3.6.1.4.1.318.1.1.1.4.2.1.0', # [5] Output Voltage
+    '1.3.6.1.4.1.318.1.1.1.4.2.3.0', # [6] Load
+    '1.3.6.1.4.1.318.1.1.1.7.2.3.0', # [7] Last Test Date
+    '1.3.6.1.4.1.318.1.1.1.2.2.3.0', # [8] Runtime
+    '1.3.6.1.4.1.318.1.1.1.2.1.1.0', # [9] Battery Date
+    '1.3.6.1.4.1.318.1.1.1.1.2.1.0', # [10] Firmware
+    '1.3.6.1.4.1.318.1.1.1.1.2.3.0'  # [11] Serial Number
 ]
 
 DETAILED_STATUS_MAP = {
@@ -350,33 +358,70 @@ def poll_domains():
         domain_audit_cache = results
         time.sleep(POLL_INTERVAL_DOMAINS)
 
-def get_snmp_data(ip, name):
+def get_snmp_data(ip, default_name):
+    # Default values
     res = {
-        'ipAddress': ip, 'name': name, 'status': 'Offline', 'model': 'N/A', 'firmware': 'N/A',
-        'batteryCapacity': '0', 'inputVoltage': '0', 'outputVoltage': '0', 'load': '0', 
-        'lastTestDate': 'N/A', 'runtime': 'N/A', 'batteryDate': 'N/A', 'statusClass': 'status-offline', 
-        'protocol': 'http', 'serialNumber': 'N/A'
+        'ipAddress': ip, 
+        'name': default_name, 
+        'status': 'Offline', 
+        'model': 'N/A', 
+        'firmware': 'N/A',
+        'batteryCapacity': '0', 
+        'inputVoltage': '0', 
+        'outputVoltage': '0', 
+        'load': '0', 
+        'lastTestDate': 'N/A', 
+        'runtime': 'N/A', 
+        'batteryDate': 'N/A', 
+        'statusClass': 'status-offline', 
+        'protocol': 'http', 
+        'serialNumber': 'N/A',
+        'batteryType': 'Lead-Acid' # Default
     }
+    
     try:
         res['protocol'] = detect_protocol(ip)
         cmd = ['snmpget', '-v1', '-c', COMMUNITY_STRING, '-Oqv', ip] + OID_ORDER
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=2.5)
-        if proc.returncode != 0: return res
-        lines = proc.stdout.strip().split('\n')
-        if len(lines) < 11: return res
         
-        raw_status = int(lines[1])
+        if proc.returncode != 0: return res
+        
+        lines = proc.stdout.strip().split('\n')
+        # Check if we have enough lines (now 12 lines expected due to added OID)
+        if len(lines) < 12: return res
+        
+        # [0] is now the fetched UPS Identification Name
+        fetched_name = lines[0].strip('"')
+        
+        # Use fetched name if valid, otherwise keep default
+        final_name = fetched_name if fetched_name and fetched_name != 'No Such Object' else default_name
+        
+        # Determine Battery Type based on FINAL NAME (from SNMP if available)
+        if final_name.strip().upper().endswith('ION'):
+            batt_type = 'Li-Ion'
+        else:
+            batt_type = 'Lead-Acid'
+            
+        res['name'] = final_name
+        res['batteryType'] = batt_type
+        
+        raw_status = int(lines[2]) # [2] is Status
         if raw_status in [1, 2]: res.update({'status': 'Online', 'statusClass': 'status-online'})
         elif raw_status == 3: res.update({'status': 'On Battery', 'statusClass': 'status-on-battery'})
         elif raw_status in DETAILED_STATUS_MAP: res.update({'status': DETAILED_STATUS_MAP[raw_status], 'statusClass': 'status-needs-attention'})
         else: res.update({'status': f'Code {raw_status}', 'statusClass': 'status-needs-attention'})
 
         res.update({
-            'model': lines[0].strip('"'), 'batteryCapacity': lines[2].strip('"'),
-            'inputVoltage': lines[3].strip('"'), 'outputVoltage': lines[4].strip('"'),
-            'load': lines[5].strip('"'), 'lastTestDate': lines[6].strip('"'),
-            'runtime': lines[7].strip('"'), 'batteryDate': lines[8].strip('"'),
-            'firmware': lines[9].strip('"'), 'serialNumber': lines[10].strip('"')
+            'model': lines[1].strip('"'), # [1] Model
+            'batteryCapacity': lines[3].strip('"'), # [3] Capacity
+            'inputVoltage': lines[4].strip('"'), # [4] Input V
+            'outputVoltage': lines[5].strip('"'), # [5] Output V
+            'load': lines[6].strip('"'), # [6] Load
+            'lastTestDate': lines[7].strip('"'), # [7] Test Date
+            'runtime': lines[8].strip('"'), # [8] Runtime
+            'batteryDate': lines[9].strip('"'), # [9] Batt Date
+            'firmware': lines[10].strip('"'), # [10] Firmware
+            'serialNumber': lines[11].strip('"') # [11] Serial
         })
         return res
     except: return res

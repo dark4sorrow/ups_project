@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
                 <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">Firmware Versions</h3>
                 <div class="relative h-48 w-full">
@@ -85,11 +85,18 @@
                 </div>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">Battery Chemistry</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="batteryChart"></canvas>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-center">Click a slice to view inventory list.</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
                 <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">Fleet Load Capacity</h3>
                 <div class="relative h-48 w-full">
                     <canvas id="loadChart"></canvas>
                 </div>
-                <p class="text-xs text-gray-400 mt-4 text-center">Click on a pie slice to view devices in that load category.</p>
+                <p class="text-xs text-gray-400 mt-4 text-center">Click a pie slice to view devices.</p>
             </div>
         </div>
 
@@ -138,7 +145,6 @@
     <div id="cli-modal" class="modal fixed inset-0 z-50 overflow-y-auto hidden">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeCliModal()"></div>
-            
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-4 pb-2 sm:p-6 sm:pb-2 border-b-2 border-cyan-500">
                     <div class="flex justify-between items-center">
@@ -148,7 +154,6 @@
                         </button>
                     </div>
                 </div>
-                
                 <div class="bg-white px-4 pt-4 pb-4 sm:p-6">
                     <div class="bg-gray-100 p-4 rounded border border-gray-200 font-mono text-sm text-gray-700 whitespace-pre overflow-x-auto" id="cli-content">tcpip -i 10.1.9.227
 tcpip -s 255.255.255.0
@@ -168,7 +173,6 @@ system -c "Don Murphy x7833"
 system -l "HWC-A MDF (2nd floor closet)"
 reboot</div>
                 </div>
-
                 <div class="bg-white px-4 py-3 sm:px-6 flex justify-center pb-6">
                     <button type="button" onclick="copyCliConfig()" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-6 py-2 bg-slate-700 text-base font-bold text-white hover:bg-slate-800 focus:outline-none sm:text-sm transition-colors">
                         Copy to Clipboard
@@ -323,6 +327,7 @@ reboot</div>
         let chartInstance = null;
         let firmwareChartInstance = null;
         let loadChartInstance = null;
+        let batteryChartInstance = null;
         let currentModalIp = '';
         let currentModalName = '';
 
@@ -335,6 +340,7 @@ reboot</div>
                 updateHeaderCounts(currentData);
                 renderAnalytics(currentData);
                 renderLoadChart(currentData);
+                renderBatteryChart(currentData);
                 renderUPSData();
                 
                 const now = new Date();
@@ -362,7 +368,6 @@ reboot</div>
                 const origClass = btn.className;
                 
                 btn.innerText = "Copied!";
-                // Temporarily switch to green
                 btn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
                 btn.classList.add('bg-green-600', 'hover:bg-green-700');
                 
@@ -571,6 +576,39 @@ reboot</div>
             });
         }
 
+        function renderBatteryChart(data) {
+            const ctx = document.getElementById('batteryChart').getContext('2d');
+            const buckets = { 'Li-Ion': 0, 'Lead-Acid': 0 };
+
+            data.forEach(ups => {
+                const type = ups.batteryType || 'Lead-Acid';
+                buckets[type] = (buckets[type] || 0) + 1;
+            });
+
+            if (batteryChartInstance) batteryChartInstance.destroy();
+            batteryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(buckets),
+                    datasets: [{
+                        data: Object.values(buckets),
+                        backgroundColor: ['#0d9488', '#94a3b8'] // Teal for Li-Ion, Slate for Lead-Acid
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = Object.keys(buckets)[index];
+                            openReport('BATTERY_TYPE', label);
+                        }
+                    }
+                }
+            });
+        }
+
         function renderLoadChart(data) {
             const ctx = document.getElementById('loadChart').getContext('2d');
             const buckets = { 'Low (<30%)': 0, 'Optimal (30-70%)': 0, 'High (>70%)': 0 };
@@ -660,6 +698,21 @@ reboot</div>
                             </tr>`;
                     }
                 });
+            } else if (type === 'BATTERY_TYPE') {
+                headerHTML += `<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Battery Type</th>`;
+                thead.innerHTML = headerHTML;
+                titleElem.textContent = `Battery Report: ${filter}`;
+                sortedData.forEach(ups => {
+                    const bType = ups.batteryType || 'Lead-Acid';
+                    if (bType === filter) {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ups.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono select-all">${ups.ipAddress}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${bType}</td>
+                            </tr>`;
+                    }
+                });
             }
             document.getElementById('report-modal').classList.remove('hidden');
         }
@@ -719,7 +772,11 @@ reboot</div>
             filtered.forEach(ups => {
                 const load = parseInt(ups.load) || 0;
                 const bat = parseInt(ups.batteryCapacity) || 0;
-                const protocol = ups.protocol || 'http';
+                
+                // Override for specific IP as requested
+                let protocol = ups.protocol || 'http';
+                if (ups.ipAddress === '10.3.9.213') protocol = 'https';
+                
                 const card = `
                     <div class="ups-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative group">
                         
@@ -742,7 +799,7 @@ reboot</div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 mb-3 text-sm">
                                 <div><span class="text-gray-500 text-xs">Runtime</span><p class="font-semibold text-gray-900">${ups.runtime}</p></div>
-                                <div><span class="text-gray-500 text-xs">Batt Date</span><p class="font-semibold text-gray-900">${ups.batteryDate}</p></div>
+                                <div><span class="text-gray-500 text-xs">Batt Type</span><p class="font-semibold text-gray-900">${ups.batteryType === 'Li-Ion' ? 'Lithium Ion' : (ups.batteryType || 'Lead-Acid')}</p></div>
                             </div>
                             <div class="space-y-3">
                                 <div>
